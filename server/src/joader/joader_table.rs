@@ -12,13 +12,15 @@ pub struct JoaderTable {
     // Joader is hash by the name of dataset
     joader_table: HashMap<String, Joader>,
     cache: Cache,
+    ip: String
 }
 
 impl JoaderTable {
-    pub fn new(cache: Cache) -> JoaderTable {
+    pub fn new(cache: Cache, ip: &str) -> JoaderTable {
         JoaderTable {
             joader_table: HashMap::new(),
             cache,
+            ip: ip.to_string(),
         }
     }
 

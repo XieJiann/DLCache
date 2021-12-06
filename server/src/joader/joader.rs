@@ -10,8 +10,6 @@ pub struct Joader {
     sampler: SamplerTree,
     // storing all the loaders
     loader_table: HashMap<u64, Sloader>,
-    // This table storing the ip and the loader in this IP
-    ip_table: HashMap<String, u64>,
     ref_table: HashMap<u32, usize>,
 }
 
@@ -30,7 +28,6 @@ impl Joader {
             dataset,
             sampler: SamplerTree::new(),
             loader_table: HashMap::new(),
-            ip_table: HashMap::new(),
             ref_table,
         }
     }
@@ -41,8 +38,8 @@ impl Joader {
             let ref_cnt = self.get_ref_cnt(*data, loader_ids.len());
             let addr = self.dataset.read(cache, *data, ref_cnt);
             for id in loader_ids {
-                log::debug!("Joader send {:} to {:?}", addr, self.loader_table[id]);
-                self.loader_table[id].send(addr).await;
+                log::debug!("Joader send data {:} to {:?}", addr, self.loader_table[id]);
+                self.loader_table[id].send_data(addr).await;
             }
         }
     }

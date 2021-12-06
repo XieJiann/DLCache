@@ -10,35 +10,35 @@ struct Loader {
 #[derive(Debug)]
 pub struct Sloader {
     loader: Loader,
-    s: Sender<u64>,
+    data_addr_s: Sender<u64>,
 }
 #[derive(Debug)]
 pub struct Rloader {
     loader: Loader,
-    r: Receiver<u64>,
+    data_addr_r: Receiver<u64>,
 }
 pub fn from_proto(request: CreateDataloaderRequest, id: u64) -> (Sloader, Rloader) {
     let loader = Loader {
         dataset_name: request.name,
         id,
     };
-    let (s, r) = channel::<u64>(4096);
+    let (data_addr_s, data_addr_r) = channel::<u64>(4096);
     (
         Sloader {
             loader: loader.clone(),
-            s,
+            data_addr_s,
         },
-        Rloader { loader, r },
+        Rloader { loader, data_addr_r },
     )
 }
 
 impl Rloader {
     pub async fn next(&mut self) -> u64 {
-        self.r.recv().await.unwrap()
+        self.data_addr_r.recv().await.unwrap()
     }
 
     pub async fn try_next(&mut self) -> Result<u64, TryRecvError> {
-        self.r.try_recv()
+        self.data_addr_r.try_recv()
     }
 
     pub fn get_id(&self) -> u64 {
@@ -55,8 +55,8 @@ impl Sloader {
         self.loader.id
     }
 
-    pub async fn send(&self, addr: u64) {
-        self.s.send(addr).await.unwrap();
+    pub async fn send_data(&self, addr: u64) {
+        self.data_addr_s.send(addr).await.unwrap();
     }
 
     pub fn get_name(&self) -> &str {

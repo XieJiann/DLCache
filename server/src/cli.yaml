@@ -8,10 +8,10 @@ args:
         value_name: log4rs_config
         default_value: log4rs.yaml
         takes_value: true
-    - host:
-        long: host
+    - ip_port:
+        long: ip_port
         default_value: 127.0.0.1:4321
-        value_name: host
+        value_name: ip_port
         takes_value: true
     - shm_path:
         long: shm
