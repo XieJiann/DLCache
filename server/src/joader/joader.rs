@@ -8,7 +8,10 @@ use std::collections::HashMap;
 pub struct Joader {
     dataset: DatasetRef,
     sampler: SamplerTree,
+    // storing all the loaders
     loader_table: HashMap<u64, Sloader>,
+    // This table storing the ip and the loader in this IP
+    ip_table: HashMap<String, u64>,
     ref_table: HashMap<u32, usize>,
 }
 
@@ -27,6 +30,7 @@ impl Joader {
             dataset,
             sampler: SamplerTree::new(),
             loader_table: HashMap::new(),
+            ip_table: HashMap::new(),
             ref_table,
         }
     }

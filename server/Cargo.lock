@@ -140,6 +140,7 @@ dependencies = [
  "termcolor",
  "textwrap",
  "unicase",
+ "yaml-rust",
 ]
 
 [[package]]
