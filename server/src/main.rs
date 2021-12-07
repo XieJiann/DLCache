@@ -3,8 +3,9 @@ use ::joader::joader::joader_table::JoaderTable;
 use clap::{load_yaml, App};
 use joader::proto::dataloader::data_loader_svc_server::DataLoaderSvcServer;
 use joader::proto::dataset::dataset_svc_server::DatasetSvcServer;
-use joader::service::{DataLoaderSvcImpl, DatasetSvcImpl};
+use joader::service::{DataLoaderSvcImpl, DatasetSvcImpl, GlobalID};
 use libc::shm_unlink;
+use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::process;
 use std::sync::Arc;
@@ -37,7 +38,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     log4rs::init_file(log4rs_config, Default::default()).unwrap();
     //start joader_table
     let cache = Cache::new(cache_capacity, &shm_path, head_num);
-    let joader_table = Arc::new(Mutex::new(JoaderTable::new(cache, ip_port)));
+    let joader_table = Arc::new(Mutex::new(JoaderTable::new(cache)));
 
     ctrlc::set_handler(move || {
         unsafe {
@@ -50,8 +51,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     .expect("Error setting Ctrl-C handler");
     // start server
     let addr: SocketAddr = ip_port.parse()?;
+    let loader_id = GlobalID::new();
+    let loader_id_table = Arc::new(Mutex::new(HashMap::new()));
     let dataset_svc = DatasetSvcImpl::new(joader_table.clone());
-    let data_loader_svc = DataLoaderSvcImpl::new(joader_table.clone());
+    let data_loader_svc = DataLoaderSvcImpl::new(joader_table.clone(), loader_id, loader_id_table);
 
     // start joader
     tokio::spawn(async move { start(joader_table).await });

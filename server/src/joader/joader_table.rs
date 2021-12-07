@@ -9,16 +9,13 @@ pub struct JoaderTable {
     // Joader is hash by the name of dataset
     joader_table: HashMap<String, Joader>,
     cache: Cache,
-    // current ip
-    host_addr: String,
 }
 
 impl JoaderTable {
-    pub fn new(cache: Cache, addr: &str) -> JoaderTable {
+    pub fn new(cache: Cache) -> JoaderTable {
         JoaderTable {
             joader_table: HashMap::new(),
             cache,
-            host_addr: addr.to_string(),
         }
     }
 

@@ -65,7 +65,7 @@ impl Joader {
     }
 
     pub fn add_loader(&mut self, loader_id: u64) {
-        todo!()
+        self.loader_table.insert(loader_id, Loader::new(loader_id));
     }
 
     pub fn get_mut_loader(&mut self, id: u64) -> &mut Loader {

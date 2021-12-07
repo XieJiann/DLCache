@@ -28,11 +28,7 @@ pub fn from_proto(request: CreateDatasetRequest) -> DatasetRef {
             .unwrap()
     };
     // Open the default database.
-    Arc::new(LmdbDataset {
-        items,
-        name,
-        env,
-    })
+    Arc::new(LmdbDataset { items, name, env })
 }
 
 impl LmdbDataset {
@@ -89,8 +85,7 @@ mod tests {
 
     use super::*;
     use crate::joader::joader::Joader;
-    use crate::loader;
-    use crate::proto::dataloader::CreateDataloaderRequest;
+    use crate::loader::create_data_channel;
     use std::time::SystemTime;
     #[test]
     fn test_lmdb() {
@@ -126,54 +121,62 @@ mod tests {
 
     #[tokio::test]
     async fn test_cache_lmdb() {
-        // let location = "/home/xiej/data/lmdb-imagenet/ILSVRC-train.lmdb".to_string();
-        // let len = 1001;
-        // let mut cache = Cache::new(1024 * 1024 * 1024, "DLCache", 1024);
-        // let mut items = Vec::new();
-        // for i in 0..len as usize {
-        //     items.push(DataItem {
-        //         keys: vec![i.to_string()],
-        //     })
-        // }
-        // let dataset = Arc::new(LmdbDataset {
-        //     items,
-        //     name: "Lmdb".to_string(),
-        //     env: unsafe {
-        //         lmdb::EnvBuilder::new()
-        //             .unwrap()
-        //             .open(&location, RDONLY | NOSUBDIR, 0o600)
-        //             .unwrap()
-        //     },
-        // });
-        // let mut joader = Joader::new(dataset);
-        // let request = CreateDataloaderRequest {
-        //     dataset_name: "".to_string(),
-        //     name: "".to_string(),
-        //     host_addr: "".to_string(),
-        // };
-        // let (s, mut r) = loader::from_proto(request, 0);
-        // joader.add_loader(s).unwrap();
-        // let reader = tokio::spawn(async move {
-        //     let now = SystemTime::now();
-        //     for i in 0..len {
-        //         let _idx = r.next().await;
-        //         if i != 0 && i % 1000 == 0 {
-        //             let time = SystemTime::now().duration_since(now).unwrap().as_secs_f32();
-        //             print!("read {} data need {}, avg: {}\n", i, time, time / i as f32);
-        //         }
-        //     }
-        //     println!("exist reading.....");
-        // });
-        // let writer = tokio::spawn(async move {
-        //     let now = SystemTime::now();
-        //     for i in 0..len {
-        //         joader.next(&mut cache).await;
-        //         let time = SystemTime::now().duration_since(now).unwrap().as_secs_f32();
-        //         if i != 0 && i % 1000 == 0 {
-        //             print!("read {} data need {}, avg: {}\n", i, time, time / i as f32);
-        //         }
-        //     }
-        // });
-        // join!(reader, writer);
+        let location = "/home/xiej/data/lmdb-imagenet/ILSVRC-train.lmdb".to_string();
+        let len = 1001;
+        let mut cache = Cache::new(1024 * 1024 * 1024, "DLCache", 1024);
+        let mut items = Vec::new();
+        for i in 0..len as usize {
+            items.push(DataItem {
+                keys: vec![i.to_string()],
+            })
+        }
+        let dataset = Arc::new(LmdbDataset {
+            items,
+            name: "Lmdb".to_string(),
+            env: unsafe {
+                lmdb::EnvBuilder::new()
+                    .unwrap()
+                    .open(&location, RDONLY | NOSUBDIR, 0o600)
+                    .unwrap()
+            },
+        });
+        let mut joader = Joader::new(dataset);
+        let (s, mut r) = create_data_channel(0);
+        joader.add_loader(0);
+        joader.get_mut(0).unwrap().add_data_sender(s);
+        let reader = tokio::spawn(async move {
+            let now = SystemTime::now();
+            let mut consume = 0;
+            loop {
+                let _idx = r.recv_all();
+                consume += _idx.len();
+                if consume != 0 && consume % 1000 == 0 {
+                    let time = SystemTime::now().duration_since(now).unwrap().as_secs_f32();
+                    print!(
+                        "read {} data need {}, avg: {}\n",
+                        consume,
+                        time,
+                        time / consume as f32
+                    );
+                }
+                if consume == len {
+                    break;
+                }
+            }
+            println!("exist reading.....");
+        });
+        let writer = tokio::spawn(async move {
+            let now = SystemTime::now();
+            for i in 0..len {
+                joader.next(&mut cache).await;
+                let time = SystemTime::now().duration_since(now).unwrap().as_secs_f32();
+                if i != 0 && i % 1000 == 0 {
+                    print!("read {} data need {}, avg: {}\n", i, time, time / i as f32);
+                }
+            }
+        });
+        let res = join!(reader, writer);
+        res.0.unwrap();
+        res.1.unwrap();
     }
 }

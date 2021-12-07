@@ -33,7 +33,7 @@ impl SamplerTree {
             .get_loader_set(&mut self.loader_set, 0);
     }
 
-    pub fn delete(&mut self, id: u64) {
+    pub fn delete(&mut self, _id: u64) {
         todo!()
     }
 

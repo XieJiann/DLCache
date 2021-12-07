@@ -25,16 +25,21 @@ pub fn succ() -> RspStatus {
     }
 }
 
-
 #[derive(Debug)]
 pub struct GlobalID {
     id: Arc<Mutex<u64>>,
 }
 
 impl GlobalID {
-    pub async fn get_id(&self) -> u64{
+    pub async fn get_id(&self) -> u64 {
         let mut id = self.id.lock().await;
         *id += 1;
         *id
+    }
+
+    pub fn new() -> GlobalID {
+        GlobalID {
+            id: Arc::new(Mutex::new(0)),
+        }
     }
 }

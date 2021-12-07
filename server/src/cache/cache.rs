@@ -15,7 +15,6 @@ use super::head::{Head, HEAD_SIZE};
 #[derive(Debug)]
 pub struct Cache {
     shmpath: String,
-    capacity: usize,
     head_segment: HeadSegment,
     data_segment: DataSegment,
     cached_data: CachedData,
@@ -46,7 +45,6 @@ impl Cache {
 
         Cache {
             shmpath: shmpath.to_string(),
-            capacity,
             head_segment,
             data_segment,
             start_ptr: addr,
