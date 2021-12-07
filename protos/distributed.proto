@@ -22,7 +22,7 @@ message DeleteHostResponse {
 
 message SampleResult {
     uint64 loader_id = 1;
-    repeated uint32 idx = 2;
+    repeated uint32 indices = 2;
 }
 
 message QueryHostRequest {

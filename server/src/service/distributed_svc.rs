@@ -1,5 +1,5 @@
 use crate::joader::joader_table::JoaderTable;
-use crate::loader::{create_idx_channel, IdxReceiver, Loader};
+use crate::loader::{create_idx_channel, IdxReceiver};
 use crate::proto::distributed::distributed_svc_server::DistributedSvc;
 use crate::proto::distributed::*;
 use std::collections::HashMap;
@@ -22,11 +22,21 @@ impl Host {
     fn del(&mut self, loader_id: u64) {
         self.recv.remove(&loader_id);
     }
+
+    fn recv_all(&mut self) -> Vec<SampleResult> {
+        let mut ret = Vec::new();
+        for (loader_id, v) in self.recv.iter_mut() {
+            ret.push(SampleResult {
+                loader_id: *loader_id,
+                indices: v.recv_all(),
+            });
+        }
+        ret
+    }
 }
 
 #[derive(Debug)]
 pub struct DistributedSvcImpl {
-    ip_port: String,
     loader_id: GlobalID,
     host_id: GlobalID,
     loader_id_table: Arc<Mutex<HashMap<String, u64>>>,
@@ -48,18 +58,21 @@ impl DistributedSvc for DistributedSvcImpl {
             return Err(Status::already_exists(format!("{}", request.ip)));
         }
         let id = self.host_id.get_id().await;
+        // 1. host id table: ip -> id
         table.insert(request.ip.clone(), id);
+        // 2. host port table: ip -> port
         self.host_port_table
             .lock()
             .await
             .insert(request.ip, request.port);
+        // 3. host table: id -> host
         self.host_table.lock().await.insert(id, Host::default());
         Ok(Response::new(RegisterHostResponse { host_id: id }))
     }
 
     async fn delete_host(
         &self,
-        request: Request<DeleteHostRequest>,
+        _request: Request<DeleteHostRequest>,
     ) -> Result<Response<DeleteHostResponse>, Status> {
         Err(Status::unimplemented(
             "Delete host has not been implemented",
@@ -71,7 +84,6 @@ impl DistributedSvc for DistributedSvcImpl {
         request: Request<CreateSamplerRequest>,
     ) -> Result<Response<CreateSamplerResponse>, Status> {
         let request = request.into_inner();
-
         let host_id = *self
             .host_id_table
             .lock()
@@ -79,24 +91,29 @@ impl DistributedSvc for DistributedSvcImpl {
             .get(&request.ip)
             .ok_or_else(|| Status::not_found(format!("{} not exited", request.ip)))?;
 
-        let loader_id_table = self.loader_id_table.lock().await;
+        let mut loader_id_table = self.loader_id_table.lock().await;
         let mut jt = self.joader_table.lock().await;
 
         let joader = jt
             .get_mut(&request.dataset_name)
             .map_err(|x| Status::not_found(x))?;
+        // 1. If loader not exited, add loader and update loader_id
         let loader_id;
         if loader_id_table.contains_key(&request.name) {
             loader_id = loader_id_table[&request.name];
         } else {
             loader_id = self.loader_id.get_id().await;
             joader.add_loader(loader_id);
+            loader_id_table.insert(request.name.clone(), loader_id);
         }
+
+        // 2. Add sample to loader
         let loader = joader
             .get_mut(loader_id)
             .map_err(|x| Status::not_found(x))?;
         let (is, ir) = create_idx_channel(loader_id);
         loader.add_idx_sender(is, host_id);
+        // 2. Add recv to host
         let mut ht = self.host_table.lock().await;
         let host = ht.get_mut(&host_id).unwrap();
         host.add(ir);
@@ -116,8 +133,11 @@ impl DistributedSvc for DistributedSvcImpl {
             .await
             .get(&request.ip)
             .ok_or_else(|| Status::not_found(format!("{} not exited", request.ip)))?;
-        let loader_id_table = self.loader_id_table.lock().await;
+        let mut ht = self.host_table.lock().await;
+
+        let mut loader_id_table = self.loader_id_table.lock().await;
         let mut jt = self.joader_table.lock().await;
+        //1. loader remove host
         let joader = jt
             .get_mut(&request.dataset_name)
             .map_err(|x| Status::not_found(x))?;
@@ -126,6 +146,12 @@ impl DistributedSvc for DistributedSvcImpl {
             .ok_or_else(|| Status::not_found(format!("{} not exited", request.name)))?;
         let loader = joader.get_mut(*loader_id).unwrap();
         loader.del_idx_sender(host_id);
+        //2. host remove recv
+        ht.get_mut(&host_id).unwrap().del(*loader_id);
+        //3. if empty, remove host_id
+        if loader.is_empty() {
+            loader_id_table.remove(&request.name);
+        }
         Ok(Response::new(DeleteSamplerResponse {}))
     }
 
@@ -147,6 +173,12 @@ impl DistributedSvc for DistributedSvcImpl {
         &self,
         request: Request<SampleRequest>,
     ) -> Result<Response<SampleResponse>, Status> {
-        todo!()
+        let req = request.into_inner();
+        let host_id = self.host_id_table.lock().await[&req.ip];
+        let mut ht = self.host_table.lock().await;
+
+        Ok(Response::new(SampleResponse {
+            res: ht.get_mut(&host_id).unwrap().recv_all(),
+        }))
     }
 }

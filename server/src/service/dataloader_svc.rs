@@ -93,22 +93,28 @@ impl DataLoaderSvc for DataLoaderSvcImpl {
     ) -> Result<Response<DeleteDataloaderResponse>, Status> {
         log::info!("call delete loader {:?}", request);
         let request = request.into_inner();
-        let loader_id = self.loader_id_table.lock().await[&request.name];
-        let mut jt = self.joader_table.lock().await;
+        let mut id_table = self.loader_id_table.lock().await;
+        let loader_id = id_table[&request.name];
+
         let mut rt = self.recv_table.lock().await;
+        // 1 remove recv table
+        rt.remove(&loader_id);
+
+        // 2 remove loader
+        let mut jt = self.joader_table.lock().await;
         let joader = jt
             .get_mut(&request.dataset_name)
             .map_err(|x| Status::not_found(x))?;
         let loader = joader
             .get_mut(loader_id)
             .map_err(|x| Status::not_found(x))?;
-        loader.del_data_sender();
-        rt.remove(&loader_id);
-        let mut loader_table = self.recv_table.lock().await;
-        if loader_table.contains_key(&loader_id) {
-            loader_table.remove(&loader_id);
-        }
 
+        loader.del_data_sender();
+
+        // 3 if all subhost have removed in loader, then remove loader_id
+        if loader.is_empty() {
+            id_table.remove(&request.name);
+        }
         Ok(Response::new(DeleteDataloaderResponse {}))
     }
 }

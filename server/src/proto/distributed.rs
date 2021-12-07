@@ -27,7 +27,7 @@ pub struct SampleResult {
     #[prost(uint64, tag = "1")]
     pub loader_id: u64,
     #[prost(uint32, repeated, tag = "2")]
-    pub idx: ::prost::alloc::vec::Vec<u32>,
+    pub indices: ::prost::alloc::vec::Vec<u32>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryHostRequest {

@@ -57,4 +57,8 @@ impl Loader {
     pub fn del_data_sender(&mut self) {
         todo!()
     }
+
+    pub fn is_empty(&self) -> bool {
+        todo!()
+    }
 }
