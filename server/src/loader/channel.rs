@@ -1,4 +1,4 @@
-use tokio::sync::mpsc::{channel, error::TryRecvError, Receiver, Sender};
+use tokio::sync::mpsc::{channel, Receiver, Sender};
 
 #[derive(Debug)]
 pub struct LoaderSender<T> {
@@ -35,13 +35,15 @@ impl<T> LoaderReceiver<T> {
         self.loader_id
     }
 
-    pub fn recv_all(&mut self) -> Vec<T> {
+    pub async fn recv_all(&mut self) -> Vec<T> {
         let mut ret = Vec::new();
+        let v = self.recv.recv().await.unwrap();
+        ret.push(v);
         loop {
             match self.recv.try_recv() {
                 Ok(v) => ret.push(v),
-                Err(err) => {
-                    assert_eq!(err, TryRecvError::Empty);
+                Err(_err) => {
+                    // assert_eq!(err, TryRecvError::Empty);
                     break;
                 }
             }

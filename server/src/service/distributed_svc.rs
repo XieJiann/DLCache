@@ -23,12 +23,12 @@ impl Host {
         self.recv.remove(&loader_id);
     }
 
-    fn recv_all(&mut self) -> Vec<SampleResult> {
+    async fn recv_all(&mut self) -> Vec<SampleResult> {
         let mut ret = Vec::new();
         for (loader_id, v) in self.recv.iter_mut() {
             ret.push(SampleResult {
                 loader_id: *loader_id,
-                indices: v.recv_all(),
+                indices: v.recv_all().await,
             });
         }
         ret
@@ -182,7 +182,7 @@ impl DistributedSvc for DistributedSvcImpl {
         let mut ht = self.host_table.lock().await;
 
         Ok(Response::new(SampleResponse {
-            res: ht.get_mut(&host_id).unwrap().recv_all(),
+            res: ht.get_mut(&host_id).unwrap().recv_all().await,
         }))
     }
 }

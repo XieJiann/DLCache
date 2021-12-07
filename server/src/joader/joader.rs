@@ -44,7 +44,7 @@ impl Joader {
             sampler_tree: SamplerTree::new(),
             loader_table: HashMap::new(),
             ref_table,
-            key: 0,
+            key: 1,
         }
     }
 
@@ -57,7 +57,6 @@ impl Joader {
         let mut data_table = self.sampler_tree.sample();
         for (data_idx, loader_ids) in data_table.iter_mut() {
             let ref_cnt = self.get_ref_cnt(*data_idx, loader_ids.len());
-            let addr = self.dataset.read(cache, *data_idx, ref_cnt);
             let host_id = self.get_hash_host(*data_idx);
             if host_id != self.key - 1 {
                 let loader_id_cloned = loader_ids.clone();
@@ -70,14 +69,22 @@ impl Joader {
                         .await
                     {
                         // we need distributed the idx to other hosts
+                        log::debug!(
+                            "Joader distribted data {:} to {:?} {:?}",
+                            data_idx,
+                            loader_id,
+                            host_id
+                        );
                         loader_ids.remove(&loader_id);
                     }
                 }
             }
-
-            for id in loader_ids.iter() {
-                log::debug!("Joader send data {:} to {:?}", addr, self.loader_table[id]);
-                self.loader_table[id].send_data(addr).await;
+            if !loader_ids.is_empty() {
+                let addr = self.dataset.read(cache, *data_idx, ref_cnt);
+                for id in loader_ids.iter() {
+                    log::debug!("Joader load data {:} at {:?} to {:?}", data_idx, addr, id);
+                    self.loader_table[id].send_data(addr).await;
+                }
             }
         }
     }
@@ -93,7 +100,13 @@ impl Joader {
     }
 
     pub fn add_loader(&mut self, loader_id: u64) {
+        log::debug!("Add a loader {}", loader_id);
         self.loader_table.insert(loader_id, Loader::new(loader_id));
+        self.sampler_tree
+            .insert(self.dataset.get_indices(), loader_id);
+        for (_, cnt) in self.ref_table.iter_mut() {
+            *cnt += 1;
+        }
     }
 
     pub fn get_mut_loader(&mut self, id: u64) -> &mut Loader {

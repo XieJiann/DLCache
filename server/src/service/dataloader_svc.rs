@@ -84,7 +84,7 @@ impl DataLoaderSvc for DataLoaderSvcImpl {
             .get_mut(&loader_id)
             .ok_or_else(|| Status::not_found(format!("Loader {} not found", loader_id)))?;
         Ok(Response::new(NextResponse {
-            address: recv.recv_all(),
+            address: recv.recv_all().await,
         }))
     }
     async fn delete_dataloader(

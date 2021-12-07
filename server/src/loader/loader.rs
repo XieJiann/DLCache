@@ -83,6 +83,7 @@ impl Loader {
         self.hosts.remove(&host_id);
     }
     pub fn add_data_sender(&mut self, data_sender: DataSender) {
+        log::debug!("Add data sender {:?}", data_sender);
         self.data_addr_s = Some(data_sender);
     }
     pub fn del_data_sender(&mut self) {
