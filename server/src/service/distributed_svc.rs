@@ -67,6 +67,10 @@ impl DistributedSvc for DistributedSvcImpl {
             .insert(request.ip, request.port);
         // 3. host table: id -> host
         self.host_table.lock().await.insert(id, Host::default());
+
+        // 4. update host number
+        let mut jt = self.joader_table.lock().await;
+        jt.set_hash_key(table.len() as u32);
         Ok(Response::new(RegisterHostResponse { host_id: id }))
     }
 

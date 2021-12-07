@@ -62,4 +62,10 @@ impl JoaderTable {
             }
         }
     }
+
+    pub fn set_hash_key(&mut self, num: u32) {
+        for (_, v) in self.joader_table.iter_mut() {
+            v.set_hash_key(num);
+        }
+    }
 }

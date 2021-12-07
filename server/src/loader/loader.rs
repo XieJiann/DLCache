@@ -18,9 +18,13 @@ impl Cursor {
         self.v.push(host_id);
     }
 
-    fn next(&mut self) -> u64 {
-        self.idx = (self.idx + 1) % (self.v.len());
-        self.v[self.idx]
+    fn next(&mut self) -> Option<u64> {
+        self.idx = (self.idx + 1) % (self.v.len() + 1);
+        if self.idx == self.v.len() {
+            // to local host
+            return None;
+        }
+        Some(self.v[self.idx])
     }
 }
 
@@ -59,12 +63,16 @@ impl Loader {
         self.data_addr_s.as_ref().unwrap().send(addr).await;
     }
 
-    pub async fn send_idx(&mut self, idx: u32, host_id: u64) {
+    pub async fn send_idx(&mut self, idx: u32, host_id: u64) -> bool {
         if self.hosts.contains_key(&host_id) {
             self.hosts[&host_id].send(idx).await;
-        } else {
-            self.hosts[&self.cursor.next()].send(idx).await;
+            return true;
         }
+        if let Some(host_id) = self.cursor.next() {
+            self.hosts[&host_id].send(idx).await;
+            return true;
+        }
+        false
     }
 
     pub fn add_idx_sender(&mut self, idx_sender: IdxSender, host_id: u64) {

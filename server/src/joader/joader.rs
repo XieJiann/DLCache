@@ -11,6 +11,7 @@ pub struct Joader {
     // map loader id to loader
     loader_table: HashMap<u64, Loader>,
     ref_table: HashMap<u32, usize>,
+    key: u32,
 }
 
 impl Joader {
@@ -21,6 +22,10 @@ impl Joader {
 
     pub fn contains(&self, id: u64) -> bool {
         self.loader_table.contains_key(&id)
+    }
+
+    pub fn set_hash_key(&mut self, num: u32) {
+        self.key = num + 1;
     }
 
     pub fn get_mut(&mut self, id: u64) -> Result<&mut Loader, String> {
@@ -39,15 +44,38 @@ impl Joader {
             sampler_tree: SamplerTree::new(),
             loader_table: HashMap::new(),
             ref_table,
+            key: 0,
         }
     }
 
+    #[inline]
+    fn get_hash_host(&self, idx: u32) -> u32 {
+        idx % self.key
+    }
+
     pub async fn next(&mut self, cache: &mut Cache) {
-        let data_table = self.sampler_tree.sample();
-        for (data, loader_ids) in &data_table {
-            let ref_cnt = self.get_ref_cnt(*data, loader_ids.len());
-            let addr = self.dataset.read(cache, *data, ref_cnt);
-            for id in loader_ids {
+        let mut data_table = self.sampler_tree.sample();
+        for (data_idx, loader_ids) in data_table.iter_mut() {
+            let ref_cnt = self.get_ref_cnt(*data_idx, loader_ids.len());
+            let addr = self.dataset.read(cache, *data_idx, ref_cnt);
+            let host_id = self.get_hash_host(*data_idx);
+            if host_id != self.key - 1 {
+                let loader_id_cloned = loader_ids.clone();
+                for loader_id in loader_id_cloned {
+                    if self
+                        .loader_table
+                        .get_mut(&loader_id)
+                        .unwrap()
+                        .send_idx(*data_idx, host_id as u64)
+                        .await
+                    {
+                        // we need distributed the idx to other hosts
+                        loader_ids.remove(&loader_id);
+                    }
+                }
+            }
+
+            for id in loader_ids.iter() {
                 log::debug!("Joader send data {:} to {:?}", addr, self.loader_table[id]);
                 self.loader_table[id].send_data(addr).await;
             }
