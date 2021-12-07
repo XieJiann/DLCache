@@ -9,7 +9,7 @@ package dataloader;
 message CreateDataloaderRequest {
     string name = 1;
     string dataset_name = 2;
-    string ip = 3;
+    string host_addr = 3;
 }
 
 message CreateDataloaderResponse {

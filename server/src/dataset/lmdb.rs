@@ -13,7 +13,6 @@ use std::{fmt::Debug, sync::Arc};
 #[derive(Debug)]
 struct LmdbDataset {
     items: Vec<DataItem>,
-    location: String,
     name: String,
     env: lmdb::Environment,
 }
@@ -32,7 +31,6 @@ pub fn from_proto(request: CreateDatasetRequest) -> DatasetRef {
     Arc::new(LmdbDataset {
         items,
         name,
-        location,
         env,
     })
 }
@@ -130,16 +128,15 @@ mod tests {
     async fn test_cache_lmdb() {
         let location = "/home/xiej/data/lmdb-imagenet/ILSVRC-train.lmdb".to_string();
         let len = 1001;
-        let mut cache = Cache::new(1024 * 1024 * 1024, "DLCache".to_string(), 1024);
+        let mut cache = Cache::new(1024 * 1024 * 1024, "DLCache", 1024);
         let mut items = Vec::new();
-        for i in 0..len {
+        for i in 0..len as usize {
             items.push(DataItem {
                 keys: vec![i.to_string()],
             })
         }
         let dataset = Arc::new(LmdbDataset {
             items,
-            location: location.clone(),
             name: "Lmdb".to_string(),
             env: unsafe {
                 lmdb::EnvBuilder::new()
@@ -150,10 +147,12 @@ mod tests {
         });
         let mut joader = Joader::new(dataset);
         let request = CreateDataloaderRequest {
+            dataset_name: "".to_string(),
             name: "".to_string(),
+            host_addr: "".to_string(),
         };
         let (s, mut r) = loader::from_proto(request, 0);
-        joader.add(s).unwrap();
+        joader.add_loader(s).unwrap();
         let reader = tokio::spawn(async move {
             let now = SystemTime::now();
             for i in 0..len {

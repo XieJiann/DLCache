@@ -1,34 +1,45 @@
+use std::collections::HashMap;
+
 use crate::proto::dataloader::CreateDataloaderRequest;
 use tokio::sync::mpsc::{channel, error::TryRecvError, Receiver, Sender};
+
+use super::sampler::Ssampler;
 // Loader store the information of schema, dataset and filter
-#[derive(Default, Debug, Clone)]
-struct Loader {
-    dataset_name: String,
+
+#[derive(Debug)]
+pub struct Loader {
+    // store all hosts except the local ones
+    name: String,
     id: u64,
+    hosts: HashMap<String, Ssampler>,
+    data_addr_s: Option<Sender<u64>>,
 }
 
 #[derive(Debug)]
-pub struct Sloader {
-    loader: Loader,
-    data_addr_s: Sender<u64>,
-}
-#[derive(Debug)]
 pub struct Rloader {
-    loader: Loader,
+    name: String,
+    id: u64,
     data_addr_r: Receiver<u64>,
 }
-pub fn from_proto(request: CreateDataloaderRequest, id: u64) -> (Sloader, Rloader) {
-    let loader = Loader {
-        dataset_name: request.name,
-        id,
-    };
+
+pub fn new() -> Loader {
+    todo!()
+}
+
+pub fn from_proto(request: CreateDataloaderRequest, id: u64) -> (Loader, Rloader) {
     let (data_addr_s, data_addr_r) = channel::<u64>(4096);
     (
-        Sloader {
-            loader: loader.clone(),
-            data_addr_s,
+        Loader {
+            name: request.name.clone(),
+            id,
+            hosts: HashMap::new(),
+            data_addr_s: Some(data_addr_s),
         },
-        Rloader { loader, data_addr_r },
+        Rloader {
+            name: request.name,
+            id,
+            data_addr_r,
+        },
     )
 }
 
@@ -42,24 +53,28 @@ impl Rloader {
     }
 
     pub fn get_id(&self) -> u64 {
-        self.loader.id
+        self.id
     }
 
     pub fn get_name(&self) -> &str {
-        &self.loader.dataset_name
+        &self.name
     }
 }
 
-impl Sloader {
+impl Loader {
     pub fn get_id(&self) -> u64 {
-        self.loader.id
+        self.id
     }
 
     pub async fn send_data(&self, addr: u64) {
-        self.data_addr_s.send(addr).await.unwrap();
+        self.data_addr_s.as_ref().unwrap().send(addr).await.unwrap();
     }
 
     pub fn get_name(&self) -> &str {
-        &self.loader.dataset_name
+        &self.name
+    }
+
+    pub fn attach(&mut self, host: Ssampler, host_addr: String) -> Result<(), String> {
+        todo!()
     }
 }

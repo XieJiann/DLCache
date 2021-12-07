@@ -33,6 +33,10 @@ impl SamplerTree {
             .get_loader_set(&mut self.loader_set, 0);
     }
 
+    pub fn delete(&mut self, id: u64) {
+        todo!()
+    }
+
     pub fn get_task_values(&self, loader_id: u64) -> Vec<u32> {
         if let Some(root) = &self.root {
             return root.get_loader_values(loader_id);
@@ -90,6 +94,7 @@ impl SamplerTree {
     pub fn get_loader_values(&self, loader_id: u64) -> Vec<u32> {
         self.root.as_ref().unwrap().get_loader_values(loader_id)
     }
+
 }
 
 #[cfg(test)]
@@ -167,4 +172,6 @@ mod tests {
             assert!(values.eq(&keys));
         }
     }
+
+
 }

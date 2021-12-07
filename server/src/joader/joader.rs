@@ -1,15 +1,16 @@
 use crate::cache::cache::Cache;
 use crate::dataset::DatasetRef;
-use crate::loader::{Rloader, Sloader};
+use crate::loader::sampler::Ssampler;
+use crate::loader::Loader;
 use crate::sampler::sampler_tree::SamplerTree;
 use std::collections::HashMap;
 
 #[derive(Debug)]
 pub struct Joader {
     dataset: DatasetRef,
-    sampler: SamplerTree,
-    // storing all the loaders
-    loader_table: HashMap<u64, Sloader>,
+    sampler_tree: SamplerTree,
+    // map loader id to loader
+    loader_table: HashMap<u64, Loader>,
     ref_table: HashMap<u32, usize>,
 }
 
@@ -19,6 +20,18 @@ impl Joader {
         self.ref_table[&idx]
     }
 
+    pub fn contains(&self, id: u64) -> bool {
+        self.loader_table.contains_key(&id)
+    }
+
+    pub fn add_sampler(&mut self, sampler: Ssampler) -> Result<u64, String> {
+        todo!()
+    }
+
+    pub fn del_sampler(&mut self, loader_id: u64, host_id: u64) -> Result<u64, String> {
+        todo!()
+    }
+
     pub fn new(dataset: DatasetRef) -> Joader {
         let mut ref_table = HashMap::new();
         for i in dataset.get_indices() {
@@ -26,14 +39,14 @@ impl Joader {
         }
         Joader {
             dataset,
-            sampler: SamplerTree::new(),
+            sampler_tree: SamplerTree::new(),
             loader_table: HashMap::new(),
             ref_table,
         }
     }
 
     pub async fn next(&mut self, cache: &mut Cache) {
-        let data_table = self.sampler.sample();
+        let data_table = self.sampler_tree.sample();
         for (data, loader_ids) in &data_table {
             let ref_cnt = self.get_ref_cnt(*data, loader_ids.len());
             let addr = self.dataset.read(cache, *data, ref_cnt);
@@ -44,28 +57,22 @@ impl Joader {
         }
     }
 
-    pub fn del(&mut self, r: Rloader) {
-        let id = r.get_id();
-        let valuse = self.sampler.get_loader_values(id);
+    pub fn del(&mut self, id: u64) -> Result<(), String> {
+        let valuse = self.sampler_tree.get_loader_values(id);
+        self.sampler_tree.delete(id);
         for v in valuse.iter() {
             *self.ref_table.get_mut(v).unwrap() -= 1;
         }
         self.loader_table.remove(&id);
+        Ok(())
     }
 
-    pub fn add(&mut self, s: Sloader) -> Result<u64, String> {
-        let id = s.get_id();
-        if self.loader_table.contains_key(&id) {
-            return Err(format!("Loader {:?} has existed", id));
-        }
-        self.loader_table.insert(id, s);
-        
-        self.sampler.insert(self.dataset.get_indices(), id);
-        log::debug!("Joader Insert {:?}: {:?} to {:?}", id, self.dataset.get_name(), self.sampler);
-        for (_, cnt) in self.ref_table.iter_mut() {
-            *cnt += 1;
-        }
-        Ok(id)
+    pub fn add_loader(&mut self, loader: Loader) -> Result<u64, String> {
+        todo!()
+    }
+
+    pub fn get_mut_loader(&mut self, id: u64) -> &mut Loader {
+        self.loader_table.get_mut(&id).unwrap()
     }
 
     pub fn get_name(&self) -> &str {
@@ -73,7 +80,7 @@ impl Joader {
     }
 
     pub fn is_empty(&self) -> bool {
-        self.sampler.is_empty()
+        self.sampler_tree.is_empty()
     }
 
     pub fn len(&self) -> u64 {

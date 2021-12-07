@@ -35,7 +35,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cache_capacity: usize = matches.value_of("cache_capacity").unwrap().parse().unwrap();
     let shm_path = matches.value_of("shm_path").unwrap().to_string();
     log4rs::init_file(log4rs_config, Default::default()).unwrap();
-    // //start joader_table
+    //start joader_table
     let cache = Cache::new(cache_capacity, &shm_path, head_num);
     let joader_table = Arc::new(Mutex::new(JoaderTable::new(cache, ip_port)));
 
