@@ -94,7 +94,6 @@ impl SamplerTree {
     pub fn get_loader_values(&self, loader_id: u64) -> Vec<u32> {
         self.root.as_ref().unwrap().get_loader_values(loader_id)
     }
-
 }
 
 #[cfg(test)]
@@ -116,7 +115,7 @@ mod tests {
 
         // let sizes = [1, 2, 4, 8, 16];
         for id in 0..tasks {
-            let size = rng.gen_range(1000000..1000001);
+            let size = rng.gen_range(1..10001);
             // let size = sizes[id as usize];
             let keys = (0..size).into_iter().collect::<Vec<u32>>();
             vec_keys.push(HashSet::from_iter(keys.iter().cloned()));
@@ -172,6 +171,4 @@ mod tests {
             assert!(values.eq(&keys));
         }
     }
-
-
 }
