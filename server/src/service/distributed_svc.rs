@@ -18,6 +18,10 @@ impl Host {
     fn add(&mut self, r: IdxReceiver) {
         self.recv.insert(r.get_loader_id(), r);
     }
+
+    fn del(&mut self, loader_id: u64) {
+        self.recv.remove(&loader_id);
+    }
 }
 
 #[derive(Debug)]
@@ -67,14 +71,17 @@ impl DistributedSvc for DistributedSvcImpl {
         request: Request<CreateSamplerRequest>,
     ) -> Result<Response<CreateSamplerResponse>, Status> {
         let request = request.into_inner();
+
         let host_id = *self
             .host_id_table
             .lock()
             .await
             .get(&request.ip)
             .ok_or_else(|| Status::not_found(format!("{} not exited", request.ip)))?;
+
         let loader_id_table = self.loader_id_table.lock().await;
         let mut jt = self.joader_table.lock().await;
+
         let joader = jt
             .get_mut(&request.dataset_name)
             .map_err(|x| Status::not_found(x))?;
@@ -83,14 +90,17 @@ impl DistributedSvc for DistributedSvcImpl {
             loader_id = loader_id_table[&request.name];
         } else {
             loader_id = self.loader_id.get_id().await;
-            let loader = Loader::new(loader_id);
-            joader.add_loader(loader);
+            joader.add_loader(loader_id);
         }
-        let (is, ir) = create_idx_channel(loader_id);
         let loader = joader
             .get_mut(loader_id)
             .map_err(|x| Status::not_found(x))?;
+        let (is, ir) = create_idx_channel(loader_id);
         loader.add_idx_sender(is, host_id);
+        let mut ht = self.host_table.lock().await;
+        let host = ht.get_mut(&host_id).unwrap();
+        host.add(ir);
+
         let length = joader.len();
         Ok(Response::new(CreateSamplerResponse { length, loader_id }))
     }

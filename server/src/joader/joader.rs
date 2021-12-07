@@ -23,7 +23,7 @@ impl Joader {
         self.loader_table.contains_key(&id)
     }
 
-    pub fn get_mut(&self, id: u64) -> Result<&mut Loader, String> {
+    pub fn get_mut(&mut self, id: u64) -> Result<&mut Loader, String> {
         self.loader_table
             .get_mut(&id)
             .ok_or_else(|| format!("Loader {} does not existed!", id))
@@ -64,7 +64,7 @@ impl Joader {
         Ok(())
     }
 
-    pub fn add_loader(&mut self, loader: Loader) {
+    pub fn add_loader(&mut self, loader_id: u64) {
         todo!()
     }
 

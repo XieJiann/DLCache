@@ -29,12 +29,11 @@ message NextResponse {
 }
 
 message DeleteDataloaderRequest {
-    uint64 loader_id = 3;
+    string name = 1;
+    string dataset_name = 2;
 }
 
-message DeleteDataloaderResponse {
-    common.Status status = 3;
-}
+message DeleteDataloaderResponse {}
 
 service DataLoaderSvc {
     rpc CreateDataloader(CreateDataloaderRequest) returns (CreateDataloaderResponse);

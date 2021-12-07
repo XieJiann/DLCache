@@ -56,7 +56,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // start joader
     tokio::spawn(async move { start(joader_table).await });
 
-    println!("start joader at {:?}......\n", addr);
+    println!("start joader at {:?}......", addr);
     Server::builder()
         .add_service(DatasetSvcServer::new(dataset_svc))
         .add_service(DataLoaderSvcServer::new(data_loader_svc))

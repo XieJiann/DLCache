@@ -45,13 +45,16 @@ impl Loader {
         todo!()
     }
 
-    pub fn add_idx_sender(&self, idx_sender: IdxSender, host_id: u64) {
+    pub fn add_idx_sender(&mut self, idx_sender: IdxSender, host_id: u64) {
         todo!()
     }
-    pub fn del_idx_sender(&self, host_id: u64) {
+    pub fn del_idx_sender(&mut self, host_id: u64) {
         todo!()
     }
-    pub fn add_data_sender(&self, data_sender: DataSender) {
+    pub fn add_data_sender(&mut self, data_sender: DataSender) {
+        todo!()
+    }
+    pub fn del_data_sender(&mut self) {
         todo!()
     }
 }

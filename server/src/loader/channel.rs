@@ -30,4 +30,8 @@ impl<T> LoaderReceiver<T> {
     pub fn get_loader_id(&self) -> u64 {
         self.loader_id
     }
+
+    pub fn recv_all(&mut self) -> Vec<T> {
+        todo!()
+    }
 }
