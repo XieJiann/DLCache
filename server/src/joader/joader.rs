@@ -1,6 +1,5 @@
 use crate::cache::cache::Cache;
 use crate::dataset::DatasetRef;
-use crate::loader::sampler::Ssampler;
 use crate::loader::Loader;
 use crate::sampler::sampler_tree::SamplerTree;
 use std::collections::HashMap;
@@ -24,12 +23,10 @@ impl Joader {
         self.loader_table.contains_key(&id)
     }
 
-    pub fn add_sampler(&mut self, sampler: Ssampler) -> Result<u64, String> {
-        todo!()
-    }
-
-    pub fn del_sampler(&mut self, loader_id: u64, host_id: u64) -> Result<u64, String> {
-        todo!()
+    pub fn get_mut(&self, id: u64) -> Result<&mut Loader, String> {
+        self.loader_table
+            .get_mut(&id)
+            .ok_or_else(|| format!("Loader {} does not existed!", id))
     }
 
     pub fn new(dataset: DatasetRef) -> Joader {
@@ -67,7 +64,7 @@ impl Joader {
         Ok(())
     }
 
-    pub fn add_loader(&mut self, loader: Loader) -> Result<u64, String> {
+    pub fn add_loader(&mut self, loader: Loader) {
         todo!()
     }
 

@@ -4,7 +4,7 @@ package distributed;
 
 message RegisterHostRequest {
     string ip = 1;
-    string port = 2;
+    uint64 port = 2;
 }
 
 message RegisterHostResponse {
@@ -30,7 +30,7 @@ message QueryHostRequest {
 }
 
 message QueryHostResponse {
-    string host_addr = 1;
+    uint64 port = 1;
 }
 
 message CreateSamplerRequest {
@@ -46,6 +46,7 @@ message CreateSamplerResponse {
 
 message DeleteSamplerRequest {
     string name = 1;
+    string dataset_name = 2;
     string ip = 3;
 }
 

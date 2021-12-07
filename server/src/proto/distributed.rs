@@ -2,8 +2,8 @@
 pub struct RegisterHostRequest {
     #[prost(string, tag = "1")]
     pub ip: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub port: ::prost::alloc::string::String,
+    #[prost(uint64, tag = "2")]
+    pub port: u64,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RegisterHostResponse {
@@ -36,8 +36,8 @@ pub struct QueryHostRequest {
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryHostResponse {
-    #[prost(string, tag = "1")]
-    pub host_addr: ::prost::alloc::string::String,
+    #[prost(uint64, tag = "1")]
+    pub port: u64,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateSamplerRequest {
@@ -59,6 +59,8 @@ pub struct CreateSamplerResponse {
 pub struct DeleteSamplerRequest {
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub dataset_name: ::prost::alloc::string::String,
     #[prost(string, tag = "3")]
     pub ip: ::prost::alloc::string::String,
 }

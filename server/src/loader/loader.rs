@@ -1,80 +1,57 @@
 use std::collections::HashMap;
 
-use crate::proto::dataloader::CreateDataloaderRequest;
-use tokio::sync::mpsc::{channel, error::TryRecvError, Receiver, Sender};
-
-use super::sampler::Ssampler;
+use super::channel::{self as loader_channel, LoaderReceiver, LoaderSender};
 // Loader store the information of schema, dataset and filter
+
+pub type IdxSender = LoaderSender<u32>;
+pub type IdxReceiver = LoaderReceiver<u32>;
+pub type DataSender = LoaderSender<u64>;
+pub type DataReceiver = LoaderReceiver<u64>;
 
 #[derive(Debug)]
 pub struct Loader {
+    loader_id: u64,
     // store all hosts except the local ones
-    name: String,
-    id: u64,
-    hosts: HashMap<String, Ssampler>,
-    data_addr_s: Option<Sender<u64>>,
+    hosts: HashMap<u64, IdxSender>,
+    data_addr_s: Option<DataSender>,
 }
 
-#[derive(Debug)]
-pub struct Rloader {
-    name: String,
-    id: u64,
-    data_addr_r: Receiver<u64>,
+pub fn create_idx_channel(loader_id: u64) -> (LoaderSender<u32>, LoaderReceiver<u32>) {
+    loader_channel::new::<u32>(loader_id)
 }
 
-pub fn new() -> Loader {
-    todo!()
-}
-
-pub fn from_proto(request: CreateDataloaderRequest, id: u64) -> (Loader, Rloader) {
-    let (data_addr_s, data_addr_r) = channel::<u64>(4096);
-    (
-        Loader {
-            name: request.name.clone(),
-            id,
-            hosts: HashMap::new(),
-            data_addr_s: Some(data_addr_s),
-        },
-        Rloader {
-            name: request.name,
-            id,
-            data_addr_r,
-        },
-    )
-}
-
-impl Rloader {
-    pub async fn next(&mut self) -> u64 {
-        self.data_addr_r.recv().await.unwrap()
-    }
-
-    pub async fn try_next(&mut self) -> Result<u64, TryRecvError> {
-        self.data_addr_r.try_recv()
-    }
-
-    pub fn get_id(&self) -> u64 {
-        self.id
-    }
-
-    pub fn get_name(&self) -> &str {
-        &self.name
-    }
+pub fn create_data_channel(loader_id: u64) -> (LoaderSender<u64>, LoaderReceiver<u64>) {
+    loader_channel::new::<u64>(loader_id)
 }
 
 impl Loader {
+    pub fn new(loader_id: u64) -> Self {
+        Loader {
+            loader_id,
+            hosts: HashMap::new(),
+            data_addr_s: None,
+        }
+    }
+
     pub fn get_id(&self) -> u64 {
-        self.id
+        self.loader_id
     }
 
     pub async fn send_data(&self, addr: u64) {
-        self.data_addr_s.as_ref().unwrap().send(addr).await.unwrap();
+        todo!()
     }
 
-    pub fn get_name(&self) -> &str {
-        &self.name
+    pub async fn send_idx(&self, idx: u32) {
+        todo!()
     }
 
-    pub fn attach(&mut self, host: Ssampler, host_addr: String) -> Result<(), String> {
+    pub fn add_idx_sender(&self, idx_sender: IdxSender, host_id: u64) {
+        todo!()
+    }
+    pub fn del_idx_sender(&self, host_id: u64) {
+        todo!()
+    }
+    pub fn add_data_sender(&self, data_sender: DataSender) {
         todo!()
     }
 }
