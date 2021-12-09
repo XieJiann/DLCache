@@ -151,8 +151,8 @@ mod tests {
             let now = SystemTime::now();
             let mut consume = 0;
             loop {
-                let _idx = r.recv_all().await;
-                consume += _idx.len();
+                let (indices, empty) = r.recv_all().await;
+                consume += indices.len();
                 if consume != 0 && consume % 1000 == 0 {
                     let time = SystemTime::now().duration_since(now).unwrap().as_secs_f32();
                     print!(
@@ -162,7 +162,7 @@ mod tests {
                         time / consume as f32
                     );
                 }
-                if consume == len {
+                if consume == len || empty {
                     break;
                 }
             }

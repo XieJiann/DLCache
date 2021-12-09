@@ -81,10 +81,10 @@ impl SamplerTree {
         log::debug!("Sampler sample {:?}", loaders);
         let mut decisions = Vec::new();
         let mut res = HashMap::<u32, HashSet<u64>>::new();
-        self.root
-            .clone()
-            .unwrap()
-            .decide(&mut loaders, &mut decisions, vec![]);
+        match self.root.clone() {
+            Some(mut root) => root.decide(&mut loaders, &mut decisions, vec![]),
+            None => return res,
+        }
 
         for decision in decisions.iter_mut() {
             let ret = decision.execute();
@@ -131,7 +131,7 @@ mod tests {
     #[test]
     fn test_sampler() {
         // log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
-        sample(1);
+        sample(100);
     }
 
     fn sample(tasks: u64) {
@@ -153,6 +153,7 @@ mod tests {
         let mut time;
         loop {
             let now = Instant::now();
+            sampler.clear_loader();
             let res = sampler.sample();
             time = now.elapsed().as_secs_f32();
             if res.is_empty() {

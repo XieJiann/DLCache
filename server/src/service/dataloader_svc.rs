@@ -2,7 +2,7 @@ use crate::joader::joader_table::JoaderTable;
 use crate::loader::{create_data_channel, DataReceiver};
 use crate::proto::dataloader::data_loader_svc_server::DataLoaderSvc;
 use crate::proto::dataloader::*;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tonic::{async_trait, Request, Response, Status};
@@ -13,6 +13,7 @@ use super::{GlobalID, IDTable};
 pub struct DataLoaderSvcImpl {
     joader_table: Arc<Mutex<JoaderTable>>,
     loader_id_table: IDTable,
+    delete_loaders: Arc<Mutex<HashSet<u64>>>,
     recv_table: Arc<Mutex<HashMap<u64, DataReceiver>>>,
     loader_id: GlobalID,
 }
@@ -20,12 +21,14 @@ pub struct DataLoaderSvcImpl {
 impl DataLoaderSvcImpl {
     pub fn new(
         joader_table: Arc<Mutex<JoaderTable>>,
+        delete_loaders: Arc<Mutex<HashSet<u64>>>,
         loader_id: GlobalID,
         loader_id_table: IDTable,
     ) -> Self {
         Self {
             joader_table,
             recv_table: Default::default(),
+            delete_loaders,
             loader_id_table,
             loader_id,
         }
@@ -83,9 +86,11 @@ impl DataLoaderSvc for DataLoaderSvcImpl {
         let recv = loader_table
             .get_mut(&loader_id)
             .ok_or_else(|| Status::not_found(format!("Loader {} not found", loader_id)))?;
-        Ok(Response::new(NextResponse {
-            address: recv.recv_all().await,
-        }))
+        let (address, empty) = recv.recv_all().await;
+        if empty {
+            self.delete_loaders.lock().await.insert(loader_id);
+        }
+        Ok(Response::new(NextResponse { address }))
     }
     async fn delete_dataloader(
         &self,

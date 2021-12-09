@@ -5,7 +5,7 @@ use joader::proto::dataloader::data_loader_svc_server::DataLoaderSvcServer;
 use joader::proto::dataset::dataset_svc_server::DatasetSvcServer;
 use joader::service::{DataLoaderSvcImpl, DatasetSvcImpl, GlobalID};
 use libc::shm_unlink;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::net::SocketAddr;
 use std::process;
 use std::sync::Arc;
@@ -54,7 +54,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let loader_id = GlobalID::new();
     let loader_id_table = Arc::new(Mutex::new(HashMap::new()));
     let dataset_svc = DatasetSvcImpl::new(joader_table.clone());
-    let data_loader_svc = DataLoaderSvcImpl::new(joader_table.clone(), loader_id, loader_id_table);
+    let del_loaders = Arc::new(Mutex::new(HashSet::new()));
+    let data_loader_svc = DataLoaderSvcImpl::new(
+        joader_table.clone(),
+        del_loaders,
+        loader_id,
+        loader_id_table,
+    );
 
     // start joader
     tokio::spawn(async move { start(joader_table).await });

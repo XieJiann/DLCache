@@ -53,7 +53,16 @@ impl Joader {
         idx % self.key
     }
 
+    pub async fn clear_empty_loader(&mut self) {
+        let del_loader = self.sampler_tree.clear_loader();
+        for id in del_loader {
+            self.loader_table.get_mut(&id).unwrap().close().await;
+            self.loader_table.remove(&id);
+        }
+    }
+
     pub async fn next(&mut self, cache: &mut Cache) {
+        self.clear_empty_loader().await;
         let mut data_table = self.sampler_tree.sample();
         for (data_idx, loader_ids) in data_table.iter_mut() {
             let ref_cnt = self.get_ref_cnt(*data_idx, loader_ids.len());

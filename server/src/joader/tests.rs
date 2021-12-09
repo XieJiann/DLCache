@@ -8,9 +8,9 @@ use crate::{
 async fn read_data(mut r: DataReceiver, len: usize) -> Vec<u64> {
     let mut res = Vec::new();
     loop {
-        let mut indices = r.recv_all().await;
+        let (mut indices, empty) = r.recv_all().await;
         res.append(&mut indices);
-        if res.len() == len {
+        if res.len() == len || empty {
             break;
         }
     }

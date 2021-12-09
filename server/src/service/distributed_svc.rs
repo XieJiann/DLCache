@@ -24,12 +24,20 @@ impl Host {
     }
 
     async fn recv_all(&mut self) -> Vec<SampleResult> {
+        let mut del_loaders = Vec::new();
         let mut ret = Vec::new();
         for (loader_id, v) in self.recv.iter_mut() {
+            let (indices, empty) = v.recv_all().await;
+            if empty {
+                del_loaders.push(*loader_id);
+            }
             ret.push(SampleResult {
                 loader_id: *loader_id,
-                indices: v.recv_all().await,
+                indices,
             });
+        }
+        for id in del_loaders {
+            self.recv.remove(&id);
         }
         ret
     }

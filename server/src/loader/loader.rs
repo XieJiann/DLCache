@@ -93,4 +93,10 @@ impl Loader {
     pub fn is_empty(&self) -> bool {
         self.data_addr_s.is_none() && self.hosts.is_empty()
     }
+
+    pub async fn close(&mut self) {
+        for (_, c) in self.hosts.iter_mut() {
+            c.close().await;
+        }
+    }
 }
