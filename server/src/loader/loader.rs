@@ -64,6 +64,7 @@ impl Loader {
     }
 
     pub async fn send_idx(&mut self, idx: u32, host_id: u64) -> bool {
+        assert_eq!(self.data_addr_s.is_some(), true);
         if self.hosts.contains_key(&host_id) {
             self.hosts[&host_id].send(idx).await;
             return true;
@@ -97,6 +98,9 @@ impl Loader {
     pub async fn close(&mut self) {
         for (_, c) in self.hosts.iter_mut() {
             c.close().await;
+        }
+        if let Some(sender) = &self.data_addr_s {
+            sender.close().await;
         }
     }
 }

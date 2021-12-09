@@ -33,7 +33,7 @@ where
         self.sender.send(d).await.unwrap();
     }
 
-    pub async fn close(&mut self) {
+    pub async fn close(&self) {
         self.sender
             .send(T::from_u32(DEL_SIG).unwrap())
             .await

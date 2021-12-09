@@ -2,7 +2,7 @@ use crate::cache::cache::Cache;
 use crate::dataset::DatasetRef;
 use crate::loader::Loader;
 use crate::sampler::sampler_tree::SamplerTree;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Debug)]
 pub struct Joader {
@@ -61,33 +61,37 @@ impl Joader {
         }
     }
 
+    async fn distributed(&mut self, data_idx: u32, loader_ids: &mut HashSet<u64>) {
+        let host_id = self.get_hash_host(data_idx);
+        if host_id != self.key - 1 {
+            let loader_id_cloned = loader_ids.clone();
+            for loader_id in loader_id_cloned {
+                if self
+                    .loader_table
+                    .get_mut(&loader_id)
+                    .unwrap()
+                    .send_idx(data_idx, host_id as u64)
+                    .await
+                {
+                    // we need distributed the idx to other hosts
+                    log::debug!(
+                        "Joader distribted data {:} to {:?} {:?}",
+                        data_idx,
+                        loader_id,
+                        host_id
+                    );
+                    loader_ids.remove(&loader_id);
+                }
+            }
+        }
+    }
+
     pub async fn next(&mut self, cache: &mut Cache) {
         self.clear_empty_loader().await;
         let mut data_table = self.sampler_tree.sample();
         for (data_idx, loader_ids) in data_table.iter_mut() {
             let ref_cnt = self.get_ref_cnt(*data_idx, loader_ids.len());
-            let host_id = self.get_hash_host(*data_idx);
-            if host_id != self.key - 1 {
-                let loader_id_cloned = loader_ids.clone();
-                for loader_id in loader_id_cloned {
-                    if self
-                        .loader_table
-                        .get_mut(&loader_id)
-                        .unwrap()
-                        .send_idx(*data_idx, host_id as u64)
-                        .await
-                    {
-                        // we need distributed the idx to other hosts
-                        log::debug!(
-                            "Joader distribted data {:} to {:?} {:?}",
-                            data_idx,
-                            loader_id,
-                            host_id
-                        );
-                        loader_ids.remove(&loader_id);
-                    }
-                }
-            }
+            self.distributed(*data_idx, loader_ids).await;
             if !loader_ids.is_empty() {
                 let addr = self.dataset.read(cache, *data_idx, ref_cnt);
                 for id in loader_ids.iter() {
@@ -127,7 +131,7 @@ impl Joader {
     }
 
     pub fn is_empty(&self) -> bool {
-        self.sampler_tree.is_empty()
+        self.loader_table.is_empty()
     }
 
     pub fn len(&self) -> u64 {
