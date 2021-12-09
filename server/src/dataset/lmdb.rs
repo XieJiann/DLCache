@@ -123,7 +123,7 @@ mod tests {
     async fn test_cache_lmdb() {
         log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
         let location = "/home/xiej/data/lmdb-imagenet/ILSVRC-train.lmdb".to_string();
-        let len = 2000;
+        let len = 1001;
         let name = "DLCache".to_string();
         let mut cache = Cache::new(1024 * 1024 * 1024, &name, 1024);
         let mut items = Vec::new();
