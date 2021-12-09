@@ -57,7 +57,7 @@ impl Joader {
         let del_loader = self.sampler_tree.clear_loader();
         for id in del_loader {
             self.loader_table.get_mut(&id).unwrap().close().await;
-            self.loader_table.remove(&id);
+            // We do not del loader there. Insteadly, the deletion is done by user
         }
     }
 

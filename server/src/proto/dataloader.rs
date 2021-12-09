@@ -4,8 +4,6 @@ pub struct CreateDataloaderRequest {
     pub name: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
     pub dataset_name: ::prost::alloc::string::String,
-    #[prost(string, tag = "3")]
-    pub host_addr: ::prost::alloc::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateDataloaderResponse {

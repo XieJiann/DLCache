@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x10\x64\x61taloader.proto\x12\ndataloader\x1a\x0c\x63ommon.proto\"P\n\x17\x43reateDataloaderRequest\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x14\n\x0c\x64\x61taset_name\x18\x02 \x01(\t\x12\x11\n\thost_addr\x18\x03 \x01(\t\"o\n\x18\x43reateDataloaderResponse\x12\x0e\n\x06length\x18\x01 \x01(\x04\x12\x10\n\x08shm_path\x18\x02 \x01(\t\x12\x11\n\tloader_id\x18\x03 \x01(\x04\x12\x1e\n\x06status\x18\x04 \x01(\x0b\x32\x0e.common.Status\" \n\x0bNextRequest\x12\x11\n\tloader_id\x18\x01 \x01(\x04\"\x1f\n\x0cNextResponse\x12\x0f\n\x07\x61\x64\x64ress\x18\x02 \x03(\x04\"=\n\x17\x44\x65leteDataloaderRequest\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x14\n\x0c\x64\x61taset_name\x18\x02 \x01(\t\"\x1a\n\x18\x44\x65leteDataloaderResponse2\x88\x02\n\rDataLoaderSvc\x12]\n\x10\x43reateDataloader\x12#.dataloader.CreateDataloaderRequest\x1a$.dataloader.CreateDataloaderResponse\x12\x39\n\x04Next\x12\x17.dataloader.NextRequest\x1a\x18.dataloader.NextResponse\x12]\n\x10\x44\x65leteDataloader\x12#.dataloader.DeleteDataloaderRequest\x1a$.dataloader.DeleteDataloaderResponseb\x06proto3'
+  serialized_pb=b'\n\x10\x64\x61taloader.proto\x12\ndataloader\x1a\x0c\x63ommon.proto\"=\n\x17\x43reateDataloaderRequest\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x14\n\x0c\x64\x61taset_name\x18\x02 \x01(\t\"o\n\x18\x43reateDataloaderResponse\x12\x0e\n\x06length\x18\x01 \x01(\x04\x12\x10\n\x08shm_path\x18\x02 \x01(\t\x12\x11\n\tloader_id\x18\x03 \x01(\x04\x12\x1e\n\x06status\x18\x04 \x01(\x0b\x32\x0e.common.Status\" \n\x0bNextRequest\x12\x11\n\tloader_id\x18\x01 \x01(\x04\"\x1f\n\x0cNextResponse\x12\x0f\n\x07\x61\x64\x64ress\x18\x02 \x03(\x04\"=\n\x17\x44\x65leteDataloaderRequest\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x14\n\x0c\x64\x61taset_name\x18\x02 \x01(\t\"\x1a\n\x18\x44\x65leteDataloaderResponse2\x88\x02\n\rDataLoaderSvc\x12]\n\x10\x43reateDataloader\x12#.dataloader.CreateDataloaderRequest\x1a$.dataloader.CreateDataloaderResponse\x12\x39\n\x04Next\x12\x17.dataloader.NextRequest\x1a\x18.dataloader.NextResponse\x12]\n\x10\x44\x65leteDataloader\x12#.dataloader.DeleteDataloaderRequest\x1a$.dataloader.DeleteDataloaderResponseb\x06proto3'
   ,
   dependencies=[common__pb2.DESCRIPTOR,])
 
@@ -49,13 +49,6 @@ _CREATEDATALOADERREQUEST = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='host_addr', full_name='dataloader.CreateDataloaderRequest.host_addr', index=2,
-      number=3, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"".decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -69,7 +62,7 @@ _CREATEDATALOADERREQUEST = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=46,
-  serialized_end=126,
+  serialized_end=107,
 )
 
 
@@ -121,8 +114,8 @@ _CREATEDATALOADERRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=128,
-  serialized_end=239,
+  serialized_start=109,
+  serialized_end=220,
 )
 
 
@@ -153,8 +146,8 @@ _NEXTREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=241,
-  serialized_end=273,
+  serialized_start=222,
+  serialized_end=254,
 )
 
 
@@ -185,8 +178,8 @@ _NEXTRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=275,
-  serialized_end=306,
+  serialized_start=256,
+  serialized_end=287,
 )
 
 
@@ -224,8 +217,8 @@ _DELETEDATALOADERREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=308,
-  serialized_end=369,
+  serialized_start=289,
+  serialized_end=350,
 )
 
 
@@ -249,8 +242,8 @@ _DELETEDATALOADERRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=371,
-  serialized_end=397,
+  serialized_start=352,
+  serialized_end=378,
 )
 
 _CREATEDATALOADERRESPONSE.fields_by_name['status'].message_type = common__pb2._STATUS
@@ -313,8 +306,8 @@ _DATALOADERSVC = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=400,
-  serialized_end=664,
+  serialized_start=381,
+  serialized_end=645,
   methods=[
   _descriptor.MethodDescriptor(
     name='CreateDataloader',

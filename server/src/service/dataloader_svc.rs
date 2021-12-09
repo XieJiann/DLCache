@@ -82,13 +82,17 @@ impl DataLoaderSvc for DataLoaderSvcImpl {
     }
     async fn next(&self, request: Request<NextRequest>) -> Result<Response<NextResponse>, Status> {
         let loader_id = request.into_inner().loader_id;
+        let mut delete_loaders = self.delete_loaders.lock().await;
+        if delete_loaders.contains(&loader_id) {
+            return Err(Status::out_of_range(format!("data has used up")));
+        }
         let mut loader_table = self.recv_table.lock().await;
         let recv = loader_table
             .get_mut(&loader_id)
             .ok_or_else(|| Status::not_found(format!("Loader {} not found", loader_id)))?;
         let (address, empty) = recv.recv_all().await;
         if empty {
-            self.delete_loaders.lock().await.insert(loader_id);
+            delete_loaders.insert(loader_id);
         }
         Ok(Response::new(NextResponse { address }))
     }
