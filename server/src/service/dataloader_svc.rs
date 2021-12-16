@@ -135,7 +135,8 @@ impl DataLoaderSvc for DataLoaderSvcImpl {
         let recv = loader_table
             .get_mut(&loader_id)
             .ok_or_else(|| Status::not_found(format!("Loader {} not found", loader_id)))?;
-        let (address, empty) = recv.recv_all().await;
+        let (address, empty) = recv.recv_one().await;
+        // let (address, empty) = recv.
         if empty {
             delete_loaders.insert(loader_id);
         }

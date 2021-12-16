@@ -74,8 +74,8 @@ class Loader(object):
 
     def read(self):
         address = self.cached_addr.pop()*self.HEAD_SIZE
-        return self.dummy_read(address)
-        # return self.read_data(address)
+        # return self.dummy_read(address)
+        return self.read_data(address)
 
     def next(self):
         assert self.length > 0
@@ -90,6 +90,9 @@ class Loader(object):
         return self.read()
 
     def delete(self):
+        if self.channel is None:
+            self.channel = grpc.insecure_channel(self.server_ip)
+            self.client = dataloader_pb2_grpc.DataLoaderSvcStub(self.channel)
         request = dataloader_pb2.DeleteDataloaderRequest(
             dataset_name=self.dataset_name, name=self.name)
         # Todo(xj): bug
