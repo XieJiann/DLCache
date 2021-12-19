@@ -99,9 +99,9 @@ impl Joader {
             // Todo: Support remote ref_cnt
             let loader_cnt = loader_ids.len();
             let addr = self.dataset.read(cache, *data_idx, 0, loader_cnt);
-            for id in loader_ids.iter() {
+            for (idx, id) in loader_ids.iter().enumerate() {
                 log::debug!("Joader load data {:} at {:?} to {:?}", data_idx, addr, id);
-                self.loader_table[id].send_data(addr).await;
+                self.loader_table[id].send_data(addr, idx).await;
             }
         }
     }
@@ -115,9 +115,9 @@ impl Joader {
             let loader_cnt = loader_ids.len();
             if !loader_ids.is_empty() {
                 let addr = self.dataset.read(cache, *data_idx, ref_cnt, loader_cnt);
-                for id in loader_ids.iter() {
+                for (idx, id) in loader_ids.iter().enumerate() {
                     log::debug!("Joader load data {:} at {:?} to {:?}", data_idx, addr, id);
-                    self.loader_table[id].send_data(addr).await;
+                    self.loader_table[id].send_data(addr, idx).await;
                 }
             }
         }

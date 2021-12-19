@@ -206,8 +206,8 @@ mod test {
         log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
         const TURN: usize = 10000;
         let head_num: usize = 1024;
-        let len = (HEAD_SIZE as usize) * ((head_num + TURN-1) * HEAD_SIZE as usize);
-        
+        let len = (HEAD_SIZE as usize) * ((head_num + TURN - 1) * HEAD_SIZE as usize);
+
         let name = "DLCache".to_string();
         let (wc, rc) = unbounded::<usize>();
         let (addr_wc, addr_rc) = unbounded();
