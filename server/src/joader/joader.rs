@@ -94,9 +94,11 @@ impl Joader {
         sampler_res: &HashMap<u32, HashSet<u64>>,
         cache: &mut Cache,
     ) {
+        
         for (data_idx, loader_ids) in sampler_res {
             // Todo: Support remote ref_cnt
-            let addr = self.dataset.read(cache, *data_idx, 0);
+            let loader_cnt = loader_ids.len();
+            let addr = self.dataset.read(cache, *data_idx, 0, loader_cnt);
             for id in loader_ids.iter() {
                 log::debug!("Joader load data {:} at {:?} to {:?}", data_idx, addr, id);
                 self.loader_table[id].send_data(addr).await;
@@ -110,8 +112,9 @@ impl Joader {
         for (data_idx, loader_ids) in data_table.iter_mut() {
             let ref_cnt = self.get_ref_cnt(*data_idx, loader_ids.len());
             self.distributed(*data_idx, loader_ids).await;
+            let loader_cnt = loader_ids.len();
             if !loader_ids.is_empty() {
-                let addr = self.dataset.read(cache, *data_idx, ref_cnt);
+                let addr = self.dataset.read(cache, *data_idx, ref_cnt, loader_cnt);
                 for id in loader_ids.iter() {
                     log::debug!("Joader load data {:} at {:?} to {:?}", data_idx, addr, id);
                     self.loader_table[id].send_data(addr).await;

@@ -82,14 +82,14 @@ mod tests {
         let mut hs = HeadSegment::new(bytes.as_mut_ptr(), 1024);
         for i in 0..1024 {
             let (mut head, _) = hs.allocate(0).unwrap();
-            head.set(true, i, i as u64);
+            head.set(i, i as u64, 0);
         }
         for i in 0..1024 {
             let head: Head = bytes[i * HEAD_SIZE as usize..(i + 1) * HEAD_SIZE as usize]
                 .as_mut_ptr()
                 .into();
-            let (end, len, off) = head.get();
-            assert!(end);
+            let (readed, len, off) = head.get();
+            assert!(readed);
             assert_eq!(off, i as u64);
             assert_eq!(len, i as u32);
         }
