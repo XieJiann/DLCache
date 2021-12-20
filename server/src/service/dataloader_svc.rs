@@ -169,6 +169,7 @@ impl DataLoaderSvc for DataLoaderSvcImpl {
         // 3 if all subhost have removed in loader, then remove loader_id
         if joader.is_loader_empty(loader_id) {
             id_table.remove(&request.name);
+            joader.del_loader(loader_id);
         }
 
         if let Some(mut leader) = self.leader.clone() {

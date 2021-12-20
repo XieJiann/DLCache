@@ -123,14 +123,13 @@ impl Joader {
         }
     }
 
-    pub fn del(&mut self, id: u64) -> Result<(), String> {
+    pub fn del_loader(&mut self, id: u64) {
         let valuse = self.sampler_tree.get_loader_values(id);
         self.sampler_tree.delete(id);
         for v in valuse.iter() {
             *self.ref_table.get_mut(v).unwrap() -= 1;
         }
         self.loader_table.remove(&id);
-        Ok(())
     }
 
     pub fn add_idx_sender(&mut self, loader_id: u64, idx_sender: IdxSender, host_id: u64) {
