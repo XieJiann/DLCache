@@ -133,6 +133,10 @@ impl Cache {
         self.cached_data.contains(data_id)
     }
 
+    pub fn mark_unreaded(&mut self, head_idx: usize, loader_cnt: usize) {
+        self.head_segment.mark_unreaded(head_idx, loader_cnt);
+    }
+
     pub fn start_ptr(&self) -> *mut u8 {
         self.start_ptr.clone()
     }
@@ -215,7 +219,7 @@ mod test {
             let cache = Cache::new(len, &name, head_num as u64);
             log::debug!("writer start {:?}", cache.start_ptr());
             addr_wc.send(AtomicPtr::new(cache.start_ptr())).unwrap();
-            writer_func(cache, TURN, wc);
+            writer_func(cache, TURN, vec![wc]);
             log::debug!("write finish.......");
             thread::sleep(time::Duration::from_secs(5));
             Cache::close(name);
@@ -223,24 +227,65 @@ mod test {
         let reader = thread::spawn(move || {
             let mut start_ptr = addr_rc.recv().unwrap();
             log::debug!("reader start {:?}", *start_ptr.get_mut());
-            reader_func(*start_ptr.get_mut(), TURN, rc);
+            reader_func(*start_ptr.get_mut(), TURN, rc, 1);
             println!("read finish.......");
         });
         reader.join().unwrap();
         writer.join().unwrap();
     }
 
-    fn writer_func(mut cache: Cache, turn: usize, wc: Sender<usize>) {
+    #[test]
+    fn two_thread_test_with_two_reader() {
+        log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
+        const TURN: usize = 10000;
+        let head_num: usize = 1024;
+        let len = (HEAD_SIZE as usize) * ((head_num + TURN - 1) * HEAD_SIZE as usize);
+
+        let name = "DLCache".to_string();
+        let (wc1, rc1) = unbounded::<usize>();
+        let (wc2, rc2) = unbounded::<usize>();
+        let (addr_wc2, addr_rc2) = unbounded();
+        let (addr_wc1, addr_rc1) = unbounded();
+        let writer = thread::spawn(move || {
+            let cache = Cache::new(len, &name, head_num as u64);
+            log::debug!("writer start {:?}", cache.start_ptr());
+            addr_wc1.send(AtomicPtr::new(cache.start_ptr())).unwrap();
+            addr_wc2.send(AtomicPtr::new(cache.start_ptr())).unwrap();
+            writer_func(cache, TURN, vec![wc1, wc2]);
+            log::debug!("write finish.......");
+            thread::sleep(time::Duration::from_secs(5));
+            Cache::close(name);
+        });
+        let reader1 = thread::spawn(move || {
+            let mut start_ptr = addr_rc1.recv().unwrap();
+            log::debug!("reader start {:?}", *start_ptr.get_mut());
+            reader_func(*start_ptr.get_mut(), TURN, rc1, 1);
+            println!("read1 finish.......");
+        });
+        let reader2 = thread::spawn(move || {
+            let mut start_ptr = addr_rc2.recv().unwrap();
+            log::debug!("reader start {:?}", *start_ptr.get_mut());
+            reader_func(*start_ptr.get_mut(), TURN, rc2, 2);
+            println!("read2 finish.......");
+        });
+        reader1.join().unwrap();
+        reader2.join().unwrap();
+        writer.join().unwrap();
+    }
+
+    fn writer_func(mut cache: Cache, turn: usize, wcs: Vec<Sender<usize>>) {
         let mut start = SystemTime::now();
         for i in 1..turn {
             let len = i * HEAD_SIZE as usize;
             let idx = {
-                let (block_slice, idx) = cache.allocate(len, i % 1, i as u64, 1);
+                let (block_slice, idx) = cache.allocate(len, i % 1, i as u64, wcs.len());
                 assert_eq!(block_slice.len(), len);
                 block_slice.copy_from_slice(vec![7u8; len].as_slice());
                 idx
             };
-            wc.send(idx).unwrap();
+            for wc in wcs.iter() {
+                wc.send(idx).unwrap();
+            }
             if i % 1000 == 0 {
                 println!(
                     "write..{:} avg time: {:}",
@@ -250,10 +295,12 @@ mod test {
                 start = SystemTime::now();
             }
         }
-        drop(wc);
+        for wc in wcs.iter() {
+            drop(wc);
+        }
     }
 
-    fn reader_func(start_ptr: *mut u8, turn: usize, rc: Receiver<usize>) {
+    fn reader_func(start_ptr: *mut u8, turn: usize, rc: Receiver<usize>, read_off: usize) {
         let mut start = SystemTime::now();
         for i in 1..turn {
             if i % 1000 == 0 {
@@ -271,7 +318,7 @@ mod test {
             let data = unsafe { from_raw_parts(start_ptr.offset(off as isize), len as usize) };
             assert_eq!(len as usize, i * (HEAD_SIZE as usize));
             data.iter().fold((), |_, x| assert_eq!(*x, 7));
-            head.readed(1);
+            head.readed(read_off);
         }
         drop(rc);
     }

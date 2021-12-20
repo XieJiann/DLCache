@@ -65,8 +65,9 @@ impl Dataset for LmdbDataset {
 
     fn read(&self, cache: &mut Cache, idx: u32, ref_cnt: usize, loader_cnt: usize) -> u64 {
         let data_id = data_id(self.id, idx);
-        if let Some(addr) = cache.contains_data(data_id) {
-            return addr as u64;
+        if let Some(head_idx) = cache.contains_data(data_id) {
+            cache.mark_unreaded(head_idx, loader_cnt);
+            return head_idx as u64;
         }
 
         let db = lmdb::Database::open(&self.env, None, &lmdb::DatabaseOptions::defaults()).unwrap();

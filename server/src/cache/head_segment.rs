@@ -1,7 +1,6 @@
 use crate::cache::head::Head;
 use crate::cache::head::HEAD_SIZE;
 
-
 #[derive(Debug)]
 pub struct HeadSegment {
     head_segment: Vec<Head>,
@@ -24,6 +23,10 @@ impl HeadSegment {
 
     pub fn size(&self) -> u64 {
         (self.head_segment.len() as u64) * HEAD_SIZE
+    }
+
+    pub fn mark_unreaded(&mut self, idx: usize, loader_cnt: usize) {
+        self.head_segment[idx].set_unread(loader_cnt);
     }
 
     pub fn allocate(&mut self, ref_cnt: usize) -> Option<(Head, usize)> {
